@@ -1,4 +1,4 @@
-# Margyn
+<img src="brand/wordmark-light.png" alt="Margyn" width="360" />
 
 **See your real profit margin on every job, while it's still open.**
 
