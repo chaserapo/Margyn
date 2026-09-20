@@ -2,25 +2,39 @@
 
 ## Mark
 
-An "M" drawn as a trend line — the second peak sits higher than the first, with
-a small gold marker on it. Reads as the letter, a profit trend, and a "here's
-your current number" indicator all at once.
+A bold "M" (Anton) on a dark tile, paired with a 2×2 grid of the four
+arithmetic operators (−, +, ÷, ×) — margin is a calculation, so the mark says
+that directly instead of using an abstract trend line.
 
 ## Colors
 
 | Token | Hex | Use |
 |---|---|---|
-| Brand green | `#1F6F4A` | Primary — icon background, wordmark text, mark on light |
-| Cream | `#F7F7F5` | App background, mark on green |
-| Gold accent | `#E8A63B` | The marker dot only — don't use it as a fill color elsewhere |
+| Ink | `#231F20` | Text, icon strokes, app icon tile background |
+| Cream | `#F7F4EE` | Page background, wordmark on dark |
+
+Two colors only — no accent. Keeps it printable, keeps it legible small.
+
+## Typeface
+
+[Anton](https://fonts.google.com/specimen/Anton) (Google Fonts, OFL) — heavy,
+condensed, all-caps by convention here. Used for the wordmark, the tagline,
+and the app-icon "M".
 
 ## Files
 
-- `icon.svg` / rendered into `frontend/assets/icon.png` — full app icon (green bg + cream mark)
-- `adaptive-foreground.svg` — Android adaptive icon foreground (transparent bg)
-- `adaptive-monochrome.svg` — Android 13+ themed icon (single color, tinted by the OS)
-- `wordmark-light.svg` / `wordmark-dark.svg` — horizontal lockup for README, web, marketing
+- `icon.svg` / `icon.png` — app icon tile (ink bg, cream "M"), full-bleed square
+- `adaptive-foreground.svg` — Android adaptive icon foreground, cream "M" only,
+  transparent bg, sized to the safe zone — pairs with a flat ink-colored
+  background image
+- `lockup.svg` / `lockup.png` — primary horizontal lockup (operator grid +
+  "MARGYN"), cream bg — use anywhere there's room to run wide (README, web,
+  splash screens, print)
+- `lockup-tagline.svg` / `lockup-tagline.png` — operator grid + big "M" +
+  "KNOW YOUR MARGIN." tagline, for square-ish placements (social profile
+  images, a title screen)
 
-Regenerate PNGs from the SVGs with `cairosvg` if you tweak the source files —
-sizes used are 1024×1024 (icon/splash), 512×512 (adaptive fg/bg), 432×432
-(monochrome), 48×48 (favicon).
+Regenerate PNGs from the SVGs with `cairosvg` if you edit the source files.
+The wordmark text needs the Anton font installed locally to render correctly
+(`fc-list | grep -i anton` to check) — grab it from
+`google/fonts` (`ofl/anton/Anton-Regular.ttf`) if missing.
