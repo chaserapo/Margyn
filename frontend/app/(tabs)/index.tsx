@@ -4,7 +4,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { formatCents } from '@/lib/format';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import type { Job } from '@/lib/types';
 
 export default function JobsScreen() {
@@ -78,14 +78,14 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
   },
-  title: { fontSize: 28, fontWeight: '700', color: colors.text },
+  title: { fontSize: 30, fontFamily: fonts.display, color: colors.text },
   addButton: {
     backgroundColor: colors.primary,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: 8,
   },
-  addButtonText: { color: '#fff', fontWeight: '600' },
+  addButtonText: { color: colors.onPrimary, fontWeight: '600' },
   list: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.sm },
   empty: { color: colors.textMuted, marginTop: spacing.xl, textAlign: 'center' },
   error: { color: colors.bad, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },

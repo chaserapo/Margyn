@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 
 export default function SettingsScreen() {
   const [hourlyRate, setHourlyRate] = useState('');
@@ -68,7 +68,7 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: spacing.lg },
-  title: { fontSize: 28, fontWeight: '700', color: colors.text, marginTop: spacing.md, marginBottom: spacing.lg },
+  title: { fontSize: 30, fontFamily: fonts.display, color: colors.text, marginTop: spacing.md, marginBottom: spacing.lg },
   label: { color: colors.textMuted, marginBottom: spacing.xs, marginTop: spacing.md },
   input: {
     backgroundColor: colors.surface,
@@ -86,5 +86,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.xl,
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
 });

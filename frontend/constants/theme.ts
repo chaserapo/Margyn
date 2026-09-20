@@ -1,13 +1,20 @@
 export const colors = {
-  background: '#F7F7F5',
+  background: '#F7F4EE',
   surface: '#FFFFFF',
-  border: '#E4E2DD',
-  text: '#1C1C1A',
-  textMuted: '#6B6B66',
-  primary: '#1F6F4A',
-  good: '#1F6F4A',
+  border: '#E2DDD2',
+  text: '#231F20',
+  textMuted: '#726B62',
+  primary: '#231F20',
+  onPrimary: '#F7F4EE',
+  // Functional status colors for the margin indicator only - not part of the
+  // brand's two-color (ink/cream) identity.
+  good: '#1F7A4D',
   warn: '#B8860B',
   bad: '#B23A2E',
+};
+
+export const fonts = {
+  display: 'Anton',
 };
 
 export const spacing = {

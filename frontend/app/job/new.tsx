@@ -70,5 +70,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: spacing.xl,
   },
-  buttonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
 });

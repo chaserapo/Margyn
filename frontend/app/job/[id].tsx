@@ -4,7 +4,7 @@ import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
 import { formatCents } from '@/lib/format';
-import { colors, marginColor, spacing } from '@/constants/theme';
+import { colors, fonts, marginColor, spacing } from '@/constants/theme';
 import type { JobDetail, Settings } from '@/lib/types';
 
 export default function JobDetailScreen() {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: spacing.lg, gap: spacing.md },
   loading: { padding: spacing.lg, color: colors.textMuted },
-  clientName: { fontSize: 24, fontWeight: '700', color: colors.text },
+  clientName: { fontSize: 26, fontFamily: fonts.display, color: colors.text },
   marginBanner: {
     backgroundColor: colors.surface,
     borderWidth: 2,
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     alignItems: 'center',
   },
-  marginPct: { fontSize: 32, fontWeight: '800' },
+  marginPct: { fontSize: 40, fontFamily: fonts.display },
   marginTarget: { color: colors.textMuted, marginTop: spacing.xs },
   marginCents: { color: colors.text, marginTop: spacing.xs, fontWeight: '600' },
   breakdown: {
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addSmallButtonText: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  addSmallButtonText: { color: colors.onPrimary, fontSize: 20, fontWeight: '700' },
   closeButton: {
     borderWidth: 1,
     borderColor: colors.bad,
