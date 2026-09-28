@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-nativ
 import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
+import { signOut } from '@/lib/auth';
 import { colors, fonts, spacing } from '@/constants/theme';
 
 export default function SettingsScreen() {
@@ -62,6 +63,10 @@ export default function SettingsScreen() {
       <Pressable style={styles.button} onPress={save} disabled={saving}>
         <Text style={styles.buttonText}>{saving ? 'Saving…' : 'Save'}</Text>
       </Pressable>
+
+      <Pressable style={styles.signOutButton} onPress={() => signOut().catch(() => {})}>
+        <Text style={styles.signOutButtonText}>Sign out</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -87,4 +92,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
+  signOutButton: { alignItems: 'center', marginTop: spacing.xl, padding: spacing.md },
+  signOutButtonText: { color: colors.bad, fontWeight: '600' },
 });

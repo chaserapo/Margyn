@@ -1,43 +1,53 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { colors } from '@/constants/theme';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
+import SignInScreen from './sign-in';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-export default function RootLayout() {
+function AppShell() {
+  const { session, loading: authLoading } = useAuth();
   const [fontsLoaded] = useFonts({
     Anton: require('@/assets/fonts/Anton-Regular.ttf'),
   });
 
-  const onLayout = useCallback(() => {
-    if (fontsLoaded) SplashScreen.hideAsync().catch(() => {});
-  }, [fontsLoaded]);
+  const ready = fontsLoaded && !authLoading;
 
   useEffect(() => {
-    onLayout();
-  }, [onLayout]);
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
 
-  if (!fontsLoaded) return null;
+  if (!ready) return null;
+  if (!session) return <SignInScreen />;
 
   return (
-    <SafeAreaProvider onLayout={onLayout}>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="job/[id]" options={{ headerShown: true, title: 'Job' }} />
-        <Stack.Screen name="job/new" options={{ headerShown: true, title: 'New job', presentation: 'modal' }} />
-      </Stack>
-    </SafeAreaProvider>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
+        contentStyle: { backgroundColor: colors.background },
+      }}
+    >
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="job/[id]" options={{ headerShown: true, title: 'Job' }} />
+      <Stack.Screen name="job/new" options={{ headerShown: true, title: 'New job', presentation: 'modal' }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <AppShell />
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }

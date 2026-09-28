@@ -1,9 +1,2 @@
-# backend
-backend/.venv/
-backend/__pycache__/
-backend/**/__pycache__/
-backend/*.db
-backend/.env
-
 # misc
 .DS_Store
