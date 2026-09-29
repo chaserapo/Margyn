@@ -104,3 +104,45 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Editing (not just adding/deleting) materials and time entries, plus
+-- receipt photos, plus a fast way to sort jobs by margin.
+
+alter table public.materials add column if not exists receipt_path text;
+
+drop policy if exists "materials_update_own" on public.materials;
+create policy "materials_update_own" on public.materials for update using (
+  auth.uid() = user_id
+  and exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+) with check (
+  auth.uid() = user_id
+  and exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+);
+
+drop policy if exists "time_entries_update_own" on public.time_entries;
+create policy "time_entries_update_own" on public.time_entries for update using (
+  auth.uid() = user_id
+  and exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+) with check (
+  auth.uid() = user_id
+  and exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+);
+
+-- Private storage bucket for receipt photos, one folder per user
+-- (<user_id>/<filename>), enforced by policy below.
+insert into storage.buckets (id, name, public)
+values ('receipts', 'receipts', false)
+on conflict (id) do nothing;
+
+drop policy if exists "receipts_select_own" on storage.objects;
+drop policy if exists "receipts_insert_own" on storage.objects;
+drop policy if exists "receipts_delete_own" on storage.objects;
+create policy "receipts_select_own" on storage.objects for select using (
+  bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+);
+create policy "receipts_insert_own" on storage.objects for insert with check (
+  bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+);
+create policy "receipts_delete_own" on storage.objects for delete using (
+  bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
+);

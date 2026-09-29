@@ -37,6 +37,9 @@ function AppShell() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="job/[id]" options={{ headerShown: true, title: 'Job' }} />
       <Stack.Screen name="job/new" options={{ headerShown: true, title: 'New job', presentation: 'modal' }} />
+      <Stack.Screen name="job/edit" options={{ headerShown: true, title: 'Edit job', presentation: 'modal' }} />
+      <Stack.Screen name="job/material/[id]" options={{ headerShown: true, title: 'Material' }} />
+      <Stack.Screen name="job/time/[id]" options={{ headerShown: true, title: 'Time entry' }} />
     </Stack>
   );
 }

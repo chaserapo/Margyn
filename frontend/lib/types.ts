@@ -15,6 +15,7 @@ export interface MaterialLine {
   name: string;
   cost_cents: number;
   qty: number;
+  receipt_path: string | null;
   created_at: string;
 }
 
@@ -34,6 +35,11 @@ export interface JobDetail extends Job {
   total_cost_cents: number;
   margin_cents: number;
   margin_pct: number;
+}
+
+export interface JobSummary extends Job {
+  margin_pct: number;
+  margin_cents: number;
 }
 
 export interface Settings {
