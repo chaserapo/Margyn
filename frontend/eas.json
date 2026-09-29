@@ -8,10 +8,18 @@
       "distribution": "internal",
       "ios": {
         "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://gumeamhswyrahdzgjchm.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bWVhbWhzd3lyYWhkemdqY2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODA0ODksImV4cCI6MjEwNjE1NjQ4OX0.5o7ot-Lq8Xsyr5JsiQIp5mPbUK_eLmAc4wroA6eglHA"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "https://gumeamhswyrahdzgjchm.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bWVhbWhzd3lyYWhkemdqY2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODA0ODksImV4cCI6MjEwNjE1NjQ4OX0.5o7ot-Lq8Xsyr5JsiQIp5mPbUK_eLmAc4wroA6eglHA"
+      }
     }
   },
   "submit": {
