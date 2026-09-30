@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import { computeJobDetail, computeJobSummary } from './margin';
-import type { Job, JobDetail, JobSummary, MaterialLine, Settings, TimeEntry } from './types';
+import type { Job, JobDetail, JobSummary, MaterialLine, Settings, TimeEntry, TimeEntryKind } from './types';
 
 async function requireUserId(): Promise<string> {
   const { data, error } = await supabase.auth.getUser();
@@ -8,39 +8,80 @@ async function requireUserId(): Promise<string> {
   return data.user.id;
 }
 
+async function cleanUpReceipts(jobIds: string[]): Promise<void> {
+  if (jobIds.length === 0) return;
+  const { data } = await supabase.from('materials').select('receipt_path').in('job_id', jobIds).not('receipt_path', 'is', null);
+  const paths = (data ?? []).map((m) => m.receipt_path as string).filter(Boolean);
+  if (paths.length > 0) await supabase.storage.from('receipts').remove(paths).catch(() => {});
+}
+
 export const api = {
   listJobs: async (): Promise<JobSummary[]> => {
     const [jobsRes, settingsRes] = await Promise.all([
       supabase
         .from('jobs')
-        .select('*, materials(cost_cents,qty), time_entries(hours)')
+        .select('*, materials(cost_cents,qty), time_entries(hours,kind)')
+        .is('deleted_at', null)
         .order('created_at', { ascending: false }),
       supabase.from('settings').select('*').single(),
     ]);
     if (jobsRes.error) throw jobsRes.error;
     if (settingsRes.error) throw settingsRes.error;
 
-    const hourlyRateCents = (settingsRes.data as Settings).hourly_rate_cents;
+    const settings = settingsRes.data as Settings;
     return (jobsRes.data as any[]).map((row) => {
       const { materials, time_entries, ...job } = row;
-      return computeJobSummary(job as Job, materials ?? [], time_entries ?? [], hourlyRateCents);
+      return computeJobSummary(job as Job, materials ?? [], time_entries ?? [], settings.hourly_rate_cents, settings.travel_rate_cents);
     });
   },
 
-  createJob: async (input: { client_name: string; quoted_price_cents: number }): Promise<Job> => {
+  listDeletedJobs: async (): Promise<Job[]> => {
+    const { data, error } = await supabase
+      .from('jobs')
+      .select('*')
+      .not('deleted_at', 'is', null)
+      .order('deleted_at', { ascending: false });
+    if (error) throw error;
+    return data as Job[];
+  },
+
+  createJob: async (input: { client_name: string; description?: string; quoted_price_cents: number }): Promise<Job> => {
     const { data, error } = await supabase.from('jobs').insert(input).select('*').single();
     if (error) throw error;
     return data as Job;
   },
 
-  updateJob: async (id: string, input: { client_name: string; quoted_price_cents: number }): Promise<Job> => {
+  updateJob: async (
+    id: string,
+    input: { client_name: string; description?: string | null; quoted_price_cents: number }
+  ): Promise<Job> => {
     const { data, error } = await supabase.from('jobs').update(input).eq('id', id).select('*').single();
     if (error) throw error;
     return data as Job;
   },
 
+  /** Soft delete - moves the job to the trash. Fully reversible via restoreJob. */
   deleteJob: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('jobs').update({ deleted_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+  },
+
+  restoreJob: async (id: string): Promise<void> => {
+    const { error } = await supabase.from('jobs').update({ deleted_at: null }).eq('id', id);
+    if (error) throw error;
+  },
+
+  permanentlyDeleteJob: async (id: string): Promise<void> => {
+    await cleanUpReceipts([id]);
     const { error } = await supabase.from('jobs').delete().eq('id', id);
+    if (error) throw error;
+  },
+
+  emptyTrash: async (): Promise<void> => {
+    const deleted = await api.listDeletedJobs();
+    if (deleted.length === 0) return;
+    await cleanUpReceipts(deleted.map((j) => j.id));
+    const { error } = await supabase.from('jobs').delete().not('deleted_at', 'is', null);
     if (error) throw error;
   },
 
@@ -56,11 +97,13 @@ export const api = {
     if (timeRes.error) throw timeRes.error;
     if (settingsRes.error) throw settingsRes.error;
 
+    const settings = settingsRes.data as Settings;
     return computeJobDetail(
       jobRes.data as Job,
       materialsRes.data as MaterialLine[],
       timeRes.data as TimeEntry[],
-      (settingsRes.data as Settings).hourly_rate_cents
+      settings.hourly_rate_cents,
+      settings.travel_rate_cents
     );
   },
 
@@ -91,10 +134,7 @@ export const api = {
     return data as MaterialLine;
   },
 
-  updateMaterial: async (
-    id: string,
-    input: { name: string; cost_cents: number; qty: number; receipt_path?: string | null }
-  ): Promise<MaterialLine> => {
+  updateMaterial: async (id: string, input: { name: string; cost_cents: number; qty: number; receipt_path?: string | null }): Promise<MaterialLine> => {
     const { data, error } = await supabase.from('materials').update(input).eq('id', id).select('*').single();
     if (error) throw error;
     return data as MaterialLine;
@@ -109,10 +149,10 @@ export const api = {
     }
   },
 
-  addTimeEntry: async (jobId: string, input: { hours: number; note?: string }): Promise<TimeEntry> => {
+  addTimeEntry: async (jobId: string, input: { hours: number; note?: string; kind?: TimeEntryKind }): Promise<TimeEntry> => {
     const { data, error } = await supabase
       .from('time_entries')
-      .insert({ job_id: jobId, ...input })
+      .insert({ job_id: jobId, kind: 'labor', ...input })
       .select('*')
       .single();
     if (error) throw error;
@@ -125,7 +165,7 @@ export const api = {
     return data as TimeEntry;
   },
 
-  updateTimeEntry: async (id: string, input: { hours: number; note?: string }): Promise<TimeEntry> => {
+  updateTimeEntry: async (id: string, input: { hours: number; note?: string; kind?: TimeEntryKind }): Promise<TimeEntry> => {
     const { data, error } = await supabase.from('time_entries').update(input).eq('id', id).select('*').single();
     if (error) throw error;
     return data as TimeEntry;

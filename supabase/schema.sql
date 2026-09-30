@@ -146,3 +146,25 @@ create policy "receipts_insert_own" on storage.objects for insert with check (
 create policy "receipts_delete_own" on storage.objects for delete using (
   bucket_id = 'receipts' and (storage.foldername(name))[1] = auth.uid()::text
 );
+
+-- Job descriptions, soft-delete (trash), travel billing, notification
+-- toggles, and telling travel hours apart from labor hours.
+
+alter table public.jobs add column if not exists description text;
+alter table public.jobs add column if not exists deleted_at timestamptz;
+create index if not exists jobs_deleted_at_idx on public.jobs(deleted_at);
+
+alter table public.settings add column if not exists bills_travel boolean not null default false;
+alter table public.settings add column if not exists travel_rate_cents integer not null default 0;
+alter table public.settings add column if not exists notify_below_target boolean not null default true;
+alter table public.settings add column if not exists notify_over_budget boolean not null default true;
+
+alter table public.time_entries add column if not exists kind text not null default 'labor';
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'time_entries_kind_check'
+  ) then
+    alter table public.time_entries add constraint time_entries_kind_check check (kind in ('labor', 'travel'));
+  end if;
+end $$;

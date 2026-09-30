@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
@@ -40,17 +41,20 @@ function AppShell() {
       <Stack.Screen name="job/edit" options={{ headerShown: true, title: 'Edit job', presentation: 'modal' }} />
       <Stack.Screen name="job/material/[id]" options={{ headerShown: true, title: 'Material' }} />
       <Stack.Screen name="job/time/[id]" options={{ headerShown: true, title: 'Time entry' }} />
+      <Stack.Screen name="trash" options={{ headerShown: true, title: 'Trash' }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <SafeAreaProvider>
-        <StatusBar style="dark" />
-        <AppShell />
-      </SafeAreaProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <SafeAreaProvider>
+          <StatusBar style="dark" />
+          <AppShell />
+        </SafeAreaProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

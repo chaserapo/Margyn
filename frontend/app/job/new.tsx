@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
@@ -8,6 +8,7 @@ import { colors, spacing } from '@/constants/theme';
 export default function NewJobScreen() {
   const router = useRouter();
   const [clientName, setClientName] = useState('');
+  const [description, setDescription] = useState('');
   const [quotedPrice, setQuotedPrice] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -20,6 +21,7 @@ export default function NewJobScreen() {
     try {
       const job = await api.createJob({
         client_name: clientName.trim(),
+        description: description.trim() || undefined,
         quoted_price_cents: Math.round(parseFloat(quotedPrice) * 100),
       });
       router.replace(`/job/${job.id}`);
@@ -34,6 +36,15 @@ export default function NewJobScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Text style={styles.label}>Client / job name</Text>
       <TextInput style={styles.input} value={clientName} onChangeText={setClientName} placeholder="Smith kitchen rewire" />
+
+      <Text style={styles.label}>Description (optional)</Text>
+      <TextInput
+        style={[styles.input, styles.multiline]}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Rewire kitchen circuit, add 4 outlets"
+        multiline
+      />
 
       <Text style={styles.label}>Quoted price ($)</Text>
       <TextInput
@@ -63,6 +74,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  multiline: { minHeight: 70, textAlignVertical: 'top' },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 8,

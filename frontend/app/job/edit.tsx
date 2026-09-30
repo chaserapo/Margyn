@@ -9,6 +9,7 @@ export default function EditJobScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [clientName, setClientName] = useState('');
+  const [description, setDescription] = useState('');
   const [quotedPrice, setQuotedPrice] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -21,6 +22,7 @@ export default function EditJobScreen() {
         .getJob(id)
         .then((job) => {
           setClientName(job.client_name);
+          setDescription(job.description ?? '');
           setQuotedPrice((job.quoted_price_cents / 100).toString());
         })
         .catch((e) => Alert.alert('Failed to load job', e instanceof Error ? e.message : undefined))
@@ -37,6 +39,7 @@ export default function EditJobScreen() {
     try {
       await api.updateJob(id, {
         client_name: clientName.trim(),
+        description: description.trim() || null,
         quoted_price_cents: Math.round(parseFloat(quotedPrice) * 100),
       });
       router.back();
@@ -60,6 +63,9 @@ export default function EditJobScreen() {
       <Text style={styles.label}>Client / job name</Text>
       <TextInput style={styles.input} value={clientName} onChangeText={setClientName} />
 
+      <Text style={styles.label}>Description (optional)</Text>
+      <TextInput style={[styles.input, styles.multiline]} value={description} onChangeText={setDescription} multiline />
+
       <Text style={styles.label}>Quoted price ($)</Text>
       <TextInput style={styles.input} keyboardType="decimal-pad" value={quotedPrice} onChangeText={setQuotedPrice} />
 
@@ -82,6 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  multiline: { minHeight: 70, textAlignVertical: 'top' },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 8,

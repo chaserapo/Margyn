@@ -20,6 +20,9 @@ export default function JobDetailScreen() {
   const [hours, setHours] = useState('');
   const [note, setNote] = useState('');
 
+  const [travelHours, setTravelHours] = useState('');
+  const [travelNote, setTravelNote] = useState('');
+
   const targetPct = settings?.target_margin_pct ?? 40;
 
   const load = useCallback(async () => {
@@ -37,15 +40,19 @@ export default function JobDetailScreen() {
 
   const refreshAndWarn = useCallback(async () => {
     if (!id) return;
-    const updated = await api.getJob(id);
+    const [updated, s] = await Promise.all([api.getJob(id), api.getSettings()]);
     setJob(updated);
-    if (updated.status === 'open' && updated.margin_pct < targetPct) {
+    setSettings(s);
+    if (updated.status !== 'open') return;
+    if (s.notify_over_budget && updated.margin_cents < 0) {
+      Alert.alert('Over budget', `This job has gone over budget — costs now exceed the ${formatCents(updated.quoted_price_cents)} quote.`);
+    } else if (s.notify_below_target && updated.margin_pct < s.target_margin_pct) {
       Alert.alert(
         'Below target margin',
-        `This job is now at ${updated.margin_pct.toFixed(0)}% margin — below your ${targetPct}% target.`
+        `This job is now at ${updated.margin_pct.toFixed(0)}% margin — below your ${s.target_margin_pct}% target.`
       );
     }
-  }, [id, targetPct]);
+  }, [id]);
 
   if (!job) {
     return (
@@ -56,6 +63,8 @@ export default function JobDetailScreen() {
   }
 
   const isClosed = job.status === 'closed';
+  const laborEntries = job.time_entries.filter((t) => t.kind !== 'travel');
+  const travelEntries = job.time_entries.filter((t) => t.kind === 'travel');
 
   const addMaterial = async () => {
     if (!materialName.trim() || !materialCost) return;
@@ -72,9 +81,17 @@ export default function JobDetailScreen() {
 
   const addTime = async () => {
     if (!hours) return;
-    await api.addTimeEntry(job.id, { hours: parseFloat(hours), note: note.trim() || undefined });
+    await api.addTimeEntry(job.id, { hours: parseFloat(hours), note: note.trim() || undefined, kind: 'labor' });
     setHours('');
     setNote('');
+    refreshAndWarn();
+  };
+
+  const addTravel = async () => {
+    if (!travelHours) return;
+    await api.addTimeEntry(job.id, { hours: parseFloat(travelHours), note: travelNote.trim() || undefined, kind: 'travel' });
+    setTravelHours('');
+    setTravelNote('');
     refreshAndWarn();
   };
 
@@ -93,10 +110,10 @@ export default function JobDetailScreen() {
   };
 
   const deleteJob = () => {
-    Alert.alert('Delete this job?', 'This permanently removes the job and everything logged against it.', [
+    Alert.alert('Move this job to Trash?', 'You can restore it from Trash, or delete it for good from there.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
+        text: 'Move to Trash',
         style: 'destructive',
         onPress: async () => {
           await api.deleteJob(job.id);
@@ -126,6 +143,7 @@ export default function JobDetailScreen() {
       />
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.clientName}>{job.client_name}</Text>
+        {!!job.description && <Text style={styles.description}>{job.description}</Text>}
 
         <View style={[styles.marginBanner, { borderColor: marginColor(job.margin_pct, targetPct) }]}>
           <Text style={[styles.marginPct, { color: marginColor(job.margin_pct, targetPct) }]}>
@@ -139,6 +157,7 @@ export default function JobDetailScreen() {
           <Row label="Quoted price" value={formatCents(job.quoted_price_cents)} />
           <Row label="Materials" value={`- ${formatCents(job.materials_cost_cents)}`} />
           <Row label="Labor" value={`- ${formatCents(job.labor_cost_cents)}`} />
+          {settings?.bills_travel && <Row label="Travel" value={`- ${formatCents(job.travel_cost_cents)}`} />}
           <View style={styles.divider} />
           <Row label="Profit" value={formatCents(job.margin_cents)} bold />
         </View>
@@ -183,7 +202,7 @@ export default function JobDetailScreen() {
         </Section>
 
         <Section title="Time">
-          {job.time_entries.map((t) => (
+          {laborEntries.map((t) => (
             <Pressable key={t.id} onPress={() => router.push(`/job/time/${t.id}`)}>
               <Row label={t.note || 'Logged time'} value={`${t.hours}h`} tappable />
             </Pressable>
@@ -209,6 +228,36 @@ export default function JobDetailScreen() {
             </View>
           )}
         </Section>
+
+        {settings?.bills_travel && (
+          <Section title="Travel">
+            {travelEntries.map((t) => (
+              <Pressable key={t.id} onPress={() => router.push(`/job/time/${t.id}`)}>
+                <Row label={t.note || 'Travel'} value={`${t.hours}h`} tappable />
+              </Pressable>
+            ))}
+            {!isClosed && (
+              <View style={styles.addRow}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="Hours"
+                  keyboardType="decimal-pad"
+                  value={travelHours}
+                  onChangeText={setTravelHours}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex2]}
+                  placeholder="Note (optional)"
+                  value={travelNote}
+                  onChangeText={setTravelNote}
+                />
+                <Pressable style={styles.addSmallButton} onPress={addTravel}>
+                  <Text style={styles.addSmallButtonText}>+</Text>
+                </Pressable>
+              </View>
+            )}
+          </Section>
+        )}
 
         {!isClosed && (
           <Pressable style={styles.closeButton} onPress={close}>
@@ -245,6 +294,7 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', gap: spacing.md, paddingRight: spacing.xs },
   headerActionText: { color: colors.text, fontWeight: '600', fontSize: 15 },
   clientName: { fontSize: 26, fontFamily: fonts.display, color: colors.text },
+  description: { color: colors.textMuted, marginTop: spacing.xs, lineHeight: 20 },
   marginBanner: {
     backgroundColor: colors.surface,
     borderWidth: 2,
