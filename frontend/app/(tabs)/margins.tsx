@@ -74,10 +74,11 @@ function buildBuckets(jobs: JobSummary[], period: Period): Bucket[] {
     const d = stepBucket(anchor, period, -i);
     const key = d.toISOString();
     const entry = sums.get(key);
+    const avg = entry ? entry.total / entry.count : null;
     buckets.push({
       key,
       label: bucketLabel(d, period),
-      avgMargin: entry ? entry.total / entry.count : null,
+      avgMargin: avg !== null && Number.isFinite(avg) ? avg : null,
       count: entry?.count ?? 0,
     });
   }
@@ -89,8 +90,11 @@ const BAR_WIDTH = 36;
 const BAR_GAP = 16;
 
 function MarginChart({ buckets, targetPct }: { buckets: Bucket[]; targetPct: number }) {
-  const values = buckets.filter((b) => b.avgMargin !== null).map((b) => b.avgMargin as number);
-  const maxVal = Math.max(targetPct, ...values, 10);
+  const safeTargetPct = Number.isFinite(targetPct) ? targetPct : 40;
+  const values = buckets
+    .map((b) => b.avgMargin)
+    .filter((v): v is number => v !== null && Number.isFinite(v));
+  const maxVal = Math.max(safeTargetPct, ...values, 10);
   const minVal = Math.min(0, ...values);
   const range = maxVal - minVal || 1;
   const plotHeight = CHART_HEIGHT - 40;
@@ -105,7 +109,7 @@ function MarginChart({ buckets, targetPct }: { buckets: Bucket[]; targetPct: num
         <Line x1={0} y1={zeroY} x2={width} y2={zeroY} stroke={colors.border} strokeWidth={1} />
         {buckets.map((b, i) => {
           const x = BAR_GAP + i * (BAR_WIDTH + BAR_GAP);
-          if (b.avgMargin === null) {
+          if (b.avgMargin === null || !Number.isFinite(b.avgMargin)) {
             return (
               <SvgText key={b.key} x={x + BAR_WIDTH / 2} y={CHART_HEIGHT + 16} fontSize={10} fill={colors.textMuted} textAnchor="middle">
                 {b.label}
@@ -114,7 +118,7 @@ function MarginChart({ buckets, targetPct }: { buckets: Bucket[]; targetPct: num
           }
           const barY = Math.min(valueToY(b.avgMargin), zeroY);
           const barHeight = Math.max(Math.abs(valueToY(b.avgMargin) - zeroY), 2);
-          const color = marginColor(b.avgMargin, targetPct);
+          const color = marginColor(b.avgMargin, safeTargetPct);
           return (
             <G key={b.key}>
               <Rect x={x} y={barY} width={BAR_WIDTH} height={barHeight} fill={color} rx={4} />
@@ -170,7 +174,8 @@ export default function MarginsScreen() {
 
   const overall = useMemo(() => {
     if (closedJobs.length === 0) return null;
-    return closedJobs.reduce((sum, j) => sum + j.margin_pct, 0) / closedJobs.length;
+    const avg = closedJobs.reduce((sum, j) => sum + j.margin_pct, 0) / closedJobs.length;
+    return Number.isFinite(avg) ? avg : null;
   }, [closedJobs]);
 
   return (

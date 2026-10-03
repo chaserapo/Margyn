@@ -90,6 +90,7 @@ export default function EditJobScreen() {
               onChangeText={setTravelRate}
               placeholder="40"
             />
+            <Text style={styles.hint}>Log actual travel hours from the job's Travel section.</Text>
           </>
         )}
 
@@ -115,6 +116,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
+  hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 16 },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

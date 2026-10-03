@@ -1,9 +1,15 @@
 import type { Job, JobDetail, JobSummary, MaterialLine, TimeEntry } from './types';
 
+/** Coerces a possibly-missing or non-finite number (e.g. a column not yet migrated) to a safe fallback. */
+function safeNumber(value: unknown, fallback = 0): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 function marginFromCosts(quotedPriceCents: number, totalCostCents: number) {
   const marginCents = quotedPriceCents - totalCostCents;
   const marginPct = quotedPriceCents ? (marginCents / quotedPriceCents) * 100 : 0;
-  return { marginCents, marginPct };
+  return { marginCents: safeNumber(marginCents), marginPct: safeNumber(marginPct) };
 }
 
 function laborAndTravelCost(
@@ -14,12 +20,13 @@ function laborAndTravelCost(
   let laborHours = 0;
   let travelHours = 0;
   for (const t of timeEntries) {
-    if (t.kind === 'travel') travelHours += t.hours;
-    else laborHours += t.hours;
+    const hours = safeNumber(t.hours);
+    if (t.kind === 'travel') travelHours += hours;
+    else laborHours += hours;
   }
   return {
-    laborCostCents: Math.round(laborHours * hourlyRateCents),
-    travelCostCents: Math.round(travelHours * travelRateCents),
+    laborCostCents: Math.round(laborHours * safeNumber(hourlyRateCents)),
+    travelCostCents: Math.round(travelHours * safeNumber(travelRateCents)),
   };
 }
 
@@ -29,7 +36,7 @@ export function computeJobDetail(
   timeEntries: TimeEntry[],
   hourlyRateCents: number
 ): JobDetail {
-  const materialsCostCents = materials.reduce((sum, m) => sum + m.cost_cents * m.qty, 0);
+  const materialsCostCents = materials.reduce((sum, m) => sum + safeNumber(m.cost_cents) * safeNumber(m.qty, 1), 0);
   const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, job.travel_rate_cents);
   const totalCostCents = materialsCostCents + laborCostCents + travelCostCents;
   const { marginCents, marginPct } = marginFromCosts(job.quoted_price_cents, totalCostCents);
@@ -54,7 +61,7 @@ export function computeJobSummary(
   timeEntries: { hours: number; kind?: string }[],
   hourlyRateCents: number
 ): JobSummary {
-  const materialsCostCents = materials.reduce((sum, m) => sum + m.cost_cents * m.qty, 0);
+  const materialsCostCents = materials.reduce((sum, m) => sum + safeNumber(m.cost_cents) * safeNumber(m.qty, 1), 0);
   const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, job.travel_rate_cents);
   const totalCostCents = materialsCostCents + laborCostCents + travelCostCents;
   const { marginCents, marginPct } = marginFromCosts(job.quoted_price_cents, totalCostCents);

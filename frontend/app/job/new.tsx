@@ -74,6 +74,9 @@ export default function NewJobScreen() {
               onChangeText={setTravelRate}
               placeholder="40"
             />
+            <Text style={styles.hint}>
+              This just sets the rate. Once the job is created, log actual travel hours from its Travel section.
+            </Text>
           </>
         )}
 
@@ -99,6 +102,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
+  hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 16 },
   toggleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
