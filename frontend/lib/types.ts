@@ -7,6 +7,8 @@ export interface Job {
   description: string | null;
   quoted_price_cents: number;
   status: JobStatus;
+  bills_travel: boolean;
+  travel_rate_cents: number;
   created_at: string;
   closed_at: string | null;
   deleted_at: string | null;
@@ -50,8 +52,6 @@ export interface JobSummary extends Job {
 export interface Settings {
   hourly_rate_cents: number;
   target_margin_pct: number;
-  bills_travel: boolean;
-  travel_rate_cents: number;
   notify_below_target: boolean;
   notify_over_budget: boolean;
 }

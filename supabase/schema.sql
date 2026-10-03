@@ -198,3 +198,12 @@ create policy "materials_update_own" on public.materials for update using (
     or exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
   )
 );
+
+-- Travel billing moves from a global settings toggle to a per-job
+-- choice, set when the job is created (or edited).
+
+alter table public.jobs add column if not exists bills_travel boolean not null default false;
+alter table public.jobs add column if not exists travel_rate_cents integer not null default 0;
+
+alter table public.settings drop column if exists bills_travel;
+alter table public.settings drop column if exists travel_rate_cents;

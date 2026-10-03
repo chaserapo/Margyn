@@ -27,11 +27,10 @@ export function computeJobDetail(
   job: Job,
   materials: MaterialLine[],
   timeEntries: TimeEntry[],
-  hourlyRateCents: number,
-  travelRateCents: number
+  hourlyRateCents: number
 ): JobDetail {
   const materialsCostCents = materials.reduce((sum, m) => sum + m.cost_cents * m.qty, 0);
-  const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, travelRateCents);
+  const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, job.travel_rate_cents);
   const totalCostCents = materialsCostCents + laborCostCents + travelCostCents;
   const { marginCents, marginPct } = marginFromCosts(job.quoted_price_cents, totalCostCents);
 
@@ -53,11 +52,10 @@ export function computeJobSummary(
   job: Job,
   materials: { cost_cents: number; qty: number }[],
   timeEntries: { hours: number; kind?: string }[],
-  hourlyRateCents: number,
-  travelRateCents: number
+  hourlyRateCents: number
 ): JobSummary {
   const materialsCostCents = materials.reduce((sum, m) => sum + m.cost_cents * m.qty, 0);
-  const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, travelRateCents);
+  const { laborCostCents, travelCostCents } = laborAndTravelCost(timeEntries, hourlyRateCents, job.travel_rate_cents);
   const totalCostCents = materialsCostCents + laborCostCents + travelCostCents;
   const { marginCents, marginPct } = marginFromCosts(job.quoted_price_cents, totalCostCents);
 

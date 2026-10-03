@@ -2,8 +2,11 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import { api } from '@/lib/api';
 import { formatCents } from '@/lib/format';
+import { buildJobReportHtml } from '@/lib/report';
 import { colors, fonts, marginColor, spacing } from '@/constants/theme';
 import type { JobDetail, Settings } from '@/lib/types';
 
@@ -123,6 +126,20 @@ export default function JobDetailScreen() {
     ]);
   };
 
+  const share = async () => {
+    try {
+      const html = buildJobReportHtml(job);
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `${job.client_name} — job report` });
+      } else {
+        Alert.alert('Sharing not available on this device');
+      }
+    } catch (e) {
+      Alert.alert('Failed to export PDF', e instanceof Error ? e.message : undefined);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen
@@ -132,6 +149,11 @@ export default function JobDetailScreen() {
               {!isClosed && (
                 <Pressable onPress={() => router.push(`/job/edit?id=${job.id}`)} hitSlop={8}>
                   <Text style={styles.headerActionText}>Edit</Text>
+                </Pressable>
+              )}
+              {isClosed && (
+                <Pressable onPress={share} hitSlop={8}>
+                  <Text style={styles.headerActionText}>Share</Text>
                 </Pressable>
               )}
               <Pressable onPress={deleteJob} hitSlop={8}>
@@ -157,7 +179,7 @@ export default function JobDetailScreen() {
           <Row label="Quoted price" value={formatCents(job.quoted_price_cents)} />
           <Row label="Materials" value={`- ${formatCents(job.materials_cost_cents)}`} />
           <Row label="Labor" value={`- ${formatCents(job.labor_cost_cents)}`} />
-          {settings?.bills_travel && <Row label="Travel" value={`- ${formatCents(job.travel_cost_cents)}`} />}
+          {job.bills_travel && <Row label="Travel" value={`- ${formatCents(job.travel_cost_cents)}`} />}
           <View style={styles.divider} />
           <Row label="Profit" value={formatCents(job.margin_cents)} bold />
         </View>
@@ -229,7 +251,7 @@ export default function JobDetailScreen() {
           )}
         </Section>
 
-        {settings?.bills_travel && (
+        {job.bills_travel && (
           <Section title="Travel">
             {travelEntries.map((t) => (
               <Pressable key={t.id} onPress={() => router.push(`/job/time/${t.id}`)}>

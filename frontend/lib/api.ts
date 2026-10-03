@@ -31,7 +31,7 @@ export const api = {
     const settings = settingsRes.data as Settings;
     return (jobsRes.data as any[]).map((row) => {
       const { materials, time_entries, ...job } = row;
-      return computeJobSummary(job as Job, materials ?? [], time_entries ?? [], settings.hourly_rate_cents, settings.travel_rate_cents);
+      return computeJobSummary(job as Job, materials ?? [], time_entries ?? [], settings.hourly_rate_cents);
     });
   },
 
@@ -45,7 +45,13 @@ export const api = {
     return data as Job[];
   },
 
-  createJob: async (input: { client_name: string; description?: string; quoted_price_cents: number }): Promise<Job> => {
+  createJob: async (input: {
+    client_name: string;
+    description?: string;
+    quoted_price_cents: number;
+    bills_travel?: boolean;
+    travel_rate_cents?: number;
+  }): Promise<Job> => {
     const { data, error } = await supabase.from('jobs').insert(input).select('*').single();
     if (error) throw error;
     return data as Job;
@@ -53,7 +59,13 @@ export const api = {
 
   updateJob: async (
     id: string,
-    input: { client_name: string; description?: string | null; quoted_price_cents: number }
+    input: {
+      client_name: string;
+      description?: string | null;
+      quoted_price_cents: number;
+      bills_travel?: boolean;
+      travel_rate_cents?: number;
+    }
   ): Promise<Job> => {
     const { data, error } = await supabase.from('jobs').update(input).eq('id', id).select('*').single();
     if (error) throw error;
@@ -102,8 +114,7 @@ export const api = {
       jobRes.data as Job,
       materialsRes.data as MaterialLine[],
       timeRes.data as TimeEntry[],
-      settings.hourly_rate_cents,
-      settings.travel_rate_cents
+      settings.hourly_rate_cents
     );
   },
 
