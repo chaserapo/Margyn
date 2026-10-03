@@ -14,7 +14,7 @@ export interface Job {
 
 export interface MaterialLine {
   id: string;
-  job_id: string;
+  job_id: string | null;
   name: string;
   cost_cents: number;
   qty: number;

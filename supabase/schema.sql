@@ -168,3 +168,33 @@ begin
     alter table public.time_entries add constraint time_entries_kind_check check (kind in ('labor', 'travel'));
   end if;
 end $$;
+
+-- Receipts can now be captured before a job is picked for them: snap a
+-- photo on the go, allocate it to a job later. job_id is null until
+-- that happens.
+
+alter table public.materials alter column job_id drop not null;
+
+drop policy if exists "materials_insert_own" on public.materials;
+create policy "materials_insert_own" on public.materials for insert with check (
+  auth.uid() = user_id
+  and (
+    job_id is null
+    or exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+  )
+);
+
+drop policy if exists "materials_update_own" on public.materials;
+create policy "materials_update_own" on public.materials for update using (
+  auth.uid() = user_id
+  and (
+    job_id is null
+    or exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+  )
+) with check (
+  auth.uid() = user_id
+  and (
+    job_id is null
+    or exists (select 1 from public.jobs j where j.id = job_id and j.status = 'open')
+  )
+);

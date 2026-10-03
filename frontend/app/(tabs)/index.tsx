@@ -117,6 +117,9 @@ export default function JobsScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>Jobs</Text>
         <View style={styles.headerButtons}>
+          <Pressable style={styles.trashButton} onPress={() => router.push('/receipts')}>
+            <Text style={styles.trashButtonText}>Receipts</Text>
+          </Pressable>
           <Pressable style={styles.trashButton} onPress={() => router.push('/trash')}>
             <Text style={styles.trashButtonText}>Trash</Text>
           </Pressable>

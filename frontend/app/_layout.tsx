@@ -42,6 +42,8 @@ function AppShell() {
       <Stack.Screen name="job/material/[id]" options={{ headerShown: true, title: 'Material' }} />
       <Stack.Screen name="job/time/[id]" options={{ headerShown: true, title: 'Time entry' }} />
       <Stack.Screen name="trash" options={{ headerShown: true, title: 'Trash' }} />
+      <Stack.Screen name="receipts/index" options={{ headerShown: true, title: 'Receipts' }} />
+      <Stack.Screen name="receipts/[id]" options={{ headerShown: true, title: 'Allocate receipt' }} />
     </Stack>
   );
 }

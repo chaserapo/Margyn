@@ -134,7 +134,40 @@ export const api = {
     return data as MaterialLine;
   },
 
-  updateMaterial: async (id: string, input: { name: string; cost_cents: number; qty: number; receipt_path?: string | null }): Promise<MaterialLine> => {
+  updateMaterial: async (
+    id: string,
+    input: { name: string; cost_cents: number; qty: number; receipt_path?: string | null; job_id?: string }
+  ): Promise<MaterialLine> => {
+    const { data, error } = await supabase.from('materials').update(input).eq('id', id).select('*').single();
+    if (error) throw error;
+    return data as MaterialLine;
+  },
+
+  /** Captures a receipt photo with no job yet - allocate it later via assignReceipt. */
+  captureReceipt: async (receiptPath: string): Promise<MaterialLine> => {
+    const { data, error } = await supabase
+      .from('materials')
+      .insert({ job_id: null, name: '', cost_cents: 0, qty: 1, receipt_path: receiptPath })
+      .select('*')
+      .single();
+    if (error) throw error;
+    return data as MaterialLine;
+  },
+
+  listUnassignedReceipts: async (): Promise<MaterialLine[]> => {
+    const { data, error } = await supabase
+      .from('materials')
+      .select('*')
+      .is('job_id', null)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data as MaterialLine[];
+  },
+
+  assignReceipt: async (
+    id: string,
+    input: { job_id: string; name: string; cost_cents: number; qty: number }
+  ): Promise<MaterialLine> => {
     const { data, error } = await supabase.from('materials').update(input).eq('id', id).select('*').single();
     if (error) throw error;
     return data as MaterialLine;
