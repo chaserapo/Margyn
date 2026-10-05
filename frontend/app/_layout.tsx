@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,25 +7,20 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/lib/auth-context';
+import { PurchasesProvider, usePurchases } from '@/lib/purchases-context';
 import SignInScreen from './sign-in';
+import PaywallScreen from './paywall';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-function AppShell() {
-  const { session, loading: authLoading } = useAuth();
-  const [fontsLoaded] = useFonts({
-    Anton: require('@/assets/fonts/Anton-Regular.ttf'),
-  });
+function PurchasesGate({ children }: { children: ReactNode }) {
+  const { loading, isEntitled } = usePurchases();
+  if (loading) return null;
+  if (!isEntitled) return <PaywallScreen />;
+  return <>{children}</>;
+}
 
-  const ready = fontsLoaded && !authLoading;
-
-  useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
-  }, [ready]);
-
-  if (!ready) return null;
-  if (!session) return <SignInScreen />;
-
+function MainStack() {
   return (
     <Stack
       screenOptions={{
@@ -45,6 +40,30 @@ function AppShell() {
       <Stack.Screen name="receipts/index" options={{ headerShown: true, title: 'Receipts' }} />
       <Stack.Screen name="receipts/[id]" options={{ headerShown: true, title: 'Allocate receipt' }} />
     </Stack>
+  );
+}
+
+function AppShell() {
+  const { session, loading: authLoading } = useAuth();
+  const [fontsLoaded] = useFonts({
+    Anton: require('@/assets/fonts/Anton-Regular.ttf'),
+  });
+
+  const ready = fontsLoaded && !authLoading;
+
+  useEffect(() => {
+    if (ready) SplashScreen.hideAsync().catch(() => {});
+  }, [ready]);
+
+  if (!ready) return null;
+  if (!session) return <SignInScreen />;
+
+  return (
+    <PurchasesProvider userId={session.user.id}>
+      <PurchasesGate>
+        <MainStack />
+      </PurchasesGate>
+    </PurchasesProvider>
   );
 }
 
