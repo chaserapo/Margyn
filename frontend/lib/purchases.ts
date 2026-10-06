@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
 import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
-/** The RevenueCat entitlement identifier gating the app - set this up in the RevenueCat dashboard. */
-export const ENTITLEMENT_ID = 'pro';
+/** The RevenueCat entitlement identifier gating the app - matches the entitlement set up in the RevenueCat dashboard. */
+export const ENTITLEMENT_ID = 'margyn_pro';
 
 // react-native-purchases is iOS/Android only - guard it out so web (used for dev smoke-testing) never loads it.
 const Purchases = Platform.OS === 'ios' || Platform.OS === 'android' ? require('react-native-purchases').default : null;
