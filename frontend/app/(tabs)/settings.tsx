@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '@/lib/api';
@@ -12,6 +12,7 @@ export default function SettingsScreen() {
   const [notifyBelowTarget, setNotifyBelowTarget] = useState(true);
   const [notifyOverBudget, setNotifyOverBudget] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -42,6 +43,42 @@ export default function SettingsScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const manageSubscription = () => {
+    Linking.openURL('https://apps.apple.com/account/subscriptions').catch(() => {});
+  };
+
+  const deleteAccount = () => {
+    Alert.alert(
+      'Delete your account?',
+      'This permanently deletes your account and all your jobs, materials, time entries, and receipts. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Are you absolutely sure?', 'This is permanent and cannot be undone.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete forever',
+                style: 'destructive',
+                onPress: async () => {
+                  setDeleting(true);
+                  try {
+                    await api.deleteAccount();
+                  } catch (e) {
+                    Alert.alert('Failed to delete account', e instanceof Error ? e.message : undefined);
+                    setDeleting(false);
+                  }
+                },
+              },
+            ]);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -89,8 +126,17 @@ export default function SettingsScreen() {
           <Text style={styles.buttonText}>{saving ? 'Saving…' : 'Save'}</Text>
         </Pressable>
 
-        <Pressable style={styles.signOutButton} onPress={() => signOut().catch(() => {})}>
+        <Text style={styles.section}>Account</Text>
+        <Pressable style={styles.linkRow} onPress={manageSubscription}>
+          <Text style={styles.linkRowText}>Manage subscription</Text>
+        </Pressable>
+
+        <Pressable onPress={() => signOut().catch(() => {})} style={styles.signOutButton}>
           <Text style={styles.signOutButtonText}>Sign out</Text>
+        </Pressable>
+
+        <Pressable onPress={deleteAccount} disabled={deleting} style={styles.deleteButton}>
+          <Text style={styles.deleteButtonText}>{deleting ? 'Deleting…' : 'Delete account'}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -140,6 +186,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   buttonText: { color: colors.onPrimary, fontWeight: '700', fontSize: 16 },
+  linkRow: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    padding: spacing.md,
+  },
+  linkRowText: { color: colors.text, fontWeight: '600' },
   signOutButton: { alignItems: 'center', marginTop: spacing.xl, padding: spacing.md },
   signOutButtonText: { color: colors.bad, fontWeight: '600' },
+  deleteButton: { alignItems: 'center', padding: spacing.md },
+  deleteButtonText: { color: colors.textMuted, fontWeight: '600', fontSize: 13 },
 });

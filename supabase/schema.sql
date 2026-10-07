@@ -207,3 +207,21 @@ alter table public.jobs add column if not exists travel_rate_cents integer not n
 
 alter table public.settings drop column if exists bills_travel;
 alter table public.settings drop column if exists travel_rate_cents;
+
+-- Lets a signed-in user delete their own account from inside the app
+-- (Apple requires self-service account deletion, not just "email us").
+-- Deletes the auth.users row; jobs/materials/time_entries/settings all
+-- cascade via their user_id foreign keys. The client removes the user's
+-- receipt files from storage before calling this, since storage objects
+-- aren't foreign-keyed and won't cascade.
+create or replace function public.delete_user()
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+grant execute on function public.delete_user() to authenticated;
