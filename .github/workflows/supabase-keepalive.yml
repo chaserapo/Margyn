@@ -1,0 +1,27 @@
+name: Supabase keep-alive
+
+# Free-tier Supabase projects auto-pause after ~7 days with no API activity.
+# This pings the REST API every 3 days so the project never goes idle long
+# enough to pause. The anon key below is the same public key already
+# committed in frontend/eas.json - it's safe to ship (RLS protects every
+# table), it just can't sit unused for a week.
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "https://gumeamhswyrahdzgjchm.supabase.co/rest/v1/" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1bWVhbWhzd3lyYWhkemdqY2htIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1ODA0ODksImV4cCI6MjEwNjE1NjQ4OX0.5o7ot-Lq8Xsyr5JsiQIp5mPbUK_eLmAc4wroA6eglHA")
+          echo "Supabase responded with HTTP $code"
+          if [ "$code" -ge 500 ]; then
+            echo "::error::Supabase REST API returned a server error ($code)"
+            exit 1
+          fi
