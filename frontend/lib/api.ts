@@ -259,4 +259,19 @@ export const api = {
     if (error) throw error;
     return data as Settings;
   },
+
+  /** Permanently deletes the signed-in user's account and all their data. */
+  deleteAccount: async (): Promise<void> => {
+    const userId = await requireUserId();
+    const { data: files } = await supabase.storage.from('receipts').list(userId);
+    if (files && files.length > 0) {
+      await supabase.storage
+        .from('receipts')
+        .remove(files.map((f) => `${userId}/${f.name}`))
+        .catch(() => {});
+    }
+    const { error } = await supabase.rpc('delete_user');
+    if (error) throw error;
+    await supabase.auth.signOut();
+  },
 };

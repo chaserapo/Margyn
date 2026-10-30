@@ -1,16 +1,36 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { signIn, signUp } from '@/lib/auth';
+import { requestPasswordReset, signIn, signUp } from '@/lib/auth';
 import { colors, fonts, spacing } from '@/constants/theme';
 
+type Mode = 'sign-in' | 'sign-up' | 'forgot';
+
 export default function SignInScreen() {
-  const [mode, setMode] = useState<'sign-in' | 'sign-up'>('sign-in');
+  const [mode, setMode] = useState<Mode>('sign-in');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const submit = async () => {
+    if (mode === 'forgot') {
+      if (!email.trim()) {
+        Alert.alert('Enter your email');
+        return;
+      }
+      setSubmitting(true);
+      try {
+        await requestPasswordReset(email.trim());
+        Alert.alert('Check your email', "We've sent a link to reset your password.");
+        setMode('sign-in');
+      } catch (e) {
+        Alert.alert('Failed to send reset email', e instanceof Error ? e.message : undefined);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     if (!email.trim() || !password) {
       Alert.alert('Enter an email and password');
       return;
@@ -33,10 +53,22 @@ export default function SignInScreen() {
     }
   };
 
+  const titleMap: Record<Mode, string> = {
+    'sign-in': 'Sign in to your account',
+    'sign-up': 'Create an account',
+    forgot: 'Reset your password',
+  };
+
+  const buttonLabel: Record<Mode, string> = {
+    'sign-in': 'Sign in',
+    'sign-up': 'Sign up',
+    forgot: 'Send reset link',
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Margyn</Text>
-      <Text style={styles.subtitle}>{mode === 'sign-in' ? 'Sign in to your account' : 'Create an account'}</Text>
+      <Text style={styles.subtitle}>{titleMap[mode]}</Text>
 
       <Text style={styles.label}>Email</Text>
       <TextInput
@@ -49,27 +81,41 @@ export default function SignInScreen() {
         placeholder="you@example.com"
       />
 
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry
-        autoCapitalize="none"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="••••••••"
-      />
+      {mode !== 'forgot' && (
+        <>
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            secureTextEntry
+            autoCapitalize="none"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="••••••••"
+          />
+        </>
+      )}
+
+      {mode === 'sign-in' && (
+        <Pressable onPress={() => setMode('forgot')} style={styles.forgotLink}>
+          <Text style={styles.forgotLinkText}>Forgot password?</Text>
+        </Pressable>
+      )}
 
       <Pressable style={styles.button} onPress={submit} disabled={submitting}>
-        <Text style={styles.buttonText}>
-          {submitting ? 'Please wait…' : mode === 'sign-in' ? 'Sign in' : 'Sign up'}
-        </Text>
+        <Text style={styles.buttonText}>{submitting ? 'Please wait…' : buttonLabel[mode]}</Text>
       </Pressable>
 
-      <Pressable onPress={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')} style={styles.switchLink}>
-        <Text style={styles.switchLinkText}>
-          {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-        </Text>
-      </Pressable>
+      {mode === 'forgot' ? (
+        <Pressable onPress={() => setMode('sign-in')} style={styles.switchLink}>
+          <Text style={styles.switchLinkText}>Back to sign in</Text>
+        </Pressable>
+      ) : (
+        <Pressable onPress={() => setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')} style={styles.switchLink}>
+          <Text style={styles.switchLinkText}>
+            {mode === 'sign-in' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          </Text>
+        </Pressable>
+      )}
     </SafeAreaView>
   );
 }
@@ -88,6 +134,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
+  forgotLink: { alignItems: 'flex-end', marginTop: spacing.sm },
+  forgotLinkText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
   button: {
     backgroundColor: colors.primary,
     borderRadius: 8,

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
@@ -102,6 +102,16 @@ export default function PaywallScreen() {
       <Pressable onPress={() => signOut().catch(() => {})} style={styles.signOutLink}>
         <Text style={styles.signOutLinkText}>Sign out</Text>
       </Pressable>
+
+      <View style={styles.legalRow}>
+        <Pressable onPress={() => Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}>
+          <Text style={styles.legalLinkText}>Terms of Use</Text>
+        </Pressable>
+        <Text style={styles.legalDivider}>·</Text>
+        <Pressable onPress={() => Linking.openURL('https://claude.ai/artifact/Ji8PQLW4PoQFWgBzBCj2gk')}>
+          <Text style={styles.legalLinkText}>Privacy Policy</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }
@@ -126,4 +136,7 @@ const styles = StyleSheet.create({
   restoreLinkText: { color: colors.text, fontWeight: '600' },
   signOutLink: { marginTop: spacing.md, alignItems: 'center', padding: spacing.sm },
   signOutLinkText: { color: colors.bad, fontWeight: '600' },
+  legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: spacing.md, gap: spacing.xs },
+  legalLinkText: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  legalDivider: { color: colors.textMuted, fontSize: 12 },
 });
